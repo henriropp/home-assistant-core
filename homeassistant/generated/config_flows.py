@@ -395,6 +395,7 @@ FLOWS = {
         "thermobeacon",
         "thermopro",
         "tibber",
+        "tibber_smart_charge",
         "tile",
         "tilt_ble",
         "tolo",

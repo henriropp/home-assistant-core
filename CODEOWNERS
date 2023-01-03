@@ -1147,6 +1147,7 @@ build.json @home-assistant/supervisor
 /tests/components/threshold/ @fabaff
 /homeassistant/components/tibber/ @danielhiversen
 /tests/components/tibber/ @danielhiversen
+/homeassistant/components/tibber_smart_charge/ @henriropp
 /homeassistant/components/tile/ @bachya
 /tests/components/tile/ @bachya
 /homeassistant/components/tilt_ble/ @apt-itude

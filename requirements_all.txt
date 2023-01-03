@@ -1408,6 +1408,9 @@ pySwitchmate==0.5.1
 # homeassistant.components.tibber
 pyTibber==0.25.2
 
+# homeassistant.components.tibber_smart_charge
+pyTibber==0.26.6
+
 # homeassistant.components.dlink
 pyW215==0.7.0
 
