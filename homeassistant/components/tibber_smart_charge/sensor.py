@@ -49,9 +49,10 @@ async def async_setup_entry(
 
         if home.has_active_subscription:
             entities.append(TibberSensorElPrice(home))
-            # smart_charge_sensors = [SmartChargeSensor(data) for data in entry.options[CONF_SENSORS]]
-            # for sensor in smart_charge_sensors:
-            #     entities.append(sensor)
+            if CONF_SENSORS in entry.options:
+                smart_charge_sensors = [SmartChargeSensor(data) for data in entry.options[CONF_SENSORS]]
+                for sensor in smart_charge_sensors:
+                    entities.append(sensor)
 
     async_add_entities(entities, True)
 

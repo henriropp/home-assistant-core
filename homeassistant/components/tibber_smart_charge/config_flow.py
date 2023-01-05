@@ -125,12 +125,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     e for e in updated_sensors if e[CONF_NAME] != entry_name
                 ]
 
-            updated_sensors.append(
-                {
-                    "name": user_input[CONF_NAME],
-                    "count": user_input.get(CONF_COUNT, user_input[CONF_NAME]),
-                }
-            )
+            if CONF_NAME in user_input:
+                updated_sensors.append(
+                    {
+                        "name": user_input[CONF_NAME],
+                        "count": user_input.get(CONF_COUNT, user_input[CONF_NAME]),
+                    }
+                )
 
             if not errors:
                 return self.async_create_entry(
