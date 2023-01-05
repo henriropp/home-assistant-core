@@ -5,14 +5,16 @@ import asyncio
 from datetime import timedelta
 import logging
 from random import randrange
+from typing import Any, Dict, Optional
 
 import aiohttp
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_ACCESS_TOKEN, CONF_COUNT, CONF_NAME, CONF_SENSORS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import Throttle, dt as dt_util
 
@@ -47,6 +49,9 @@ async def async_setup_entry(
 
         if home.has_active_subscription:
             entities.append(TibberSensorElPrice(home))
+            # smart_charge_sensors = [SmartChargeSensor(data) for data in entry.options[CONF_SENSORS]]
+            # for sensor in smart_charge_sensors:
+            #     entities.append(sensor)
 
     async_add_entities(entities, True)
 
@@ -92,14 +97,6 @@ class TibberSensorElPrice(TibberSensor):
         self._attr_extra_state_attributes = {
             "app_nickname": None,
             "grid_company": None,
-            "estimated_annual_consumption": None,
-            "price_level": None,
-            "max_price": None,
-            "avg_price": None,
-            "min_price": None,
-            "off_peak_1": None,
-            "peak": None,
-            "off_peak_2": None,
         }
         self._attr_icon = ICON
         self._attr_name = f"Electricity price {self._home_name}"
@@ -130,10 +127,7 @@ class TibberSensorElPrice(TibberSensor):
 
         res = self._tibber_home.current_price_data()
         self._attr_native_value, price_level, self._last_updated = res
-        self._attr_extra_state_attributes["price_level"] = price_level
 
-        attrs = self._tibber_home.current_attributes()
-        self._attr_extra_state_attributes.update(attrs)
         self._attr_available = self._attr_native_value is not None
         self._attr_native_unit_of_measurement = self._tibber_home.price_unit
 
@@ -149,9 +143,6 @@ class TibberSensorElPrice(TibberSensor):
         self._attr_extra_state_attributes["grid_company"] = data["meteringPointData"][
             "gridCompany"
         ]
-        self._attr_extra_state_attributes["estimated_annual_consumption"] = data[
-            "meteringPointData"
-        ]["estimatedAnnualConsumption"]
 
         self._price_logic = PriceLogic(self._tibber_home.price_total)
         now = dt_util.now()
@@ -162,3 +153,37 @@ class TibberSensorElPrice(TibberSensor):
         self._attr_extra_state_attributes["3hours_next_active"] = (
             dt_util.parse_datetime(hours_3[0][0]).hour == now.hour
         )
+
+
+class SmartChargeSensor(Entity):
+    """Representation of a smart charge entity"""
+
+    def __init__(self, data: dict[str, str]):
+        super().__init__()
+        self.attrs: dict[str, Any] = {CONF_COUNT: data[CONF_COUNT]}
+        self._name = data[CONF_NAME]
+        self._state = None
+        self._available = True
+
+    @property
+    def name(self) -> str:
+        """Return the name of the entity."""
+        return self._name
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._name
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        return self._available
+
+    @property
+    def state(self) -> str | None:
+        return self._state
+
+    @property
+    def device_state_attributes(self) -> dict[str, Any]:
+        return self.attrs

@@ -1,24 +1,25 @@
 {
   "config": {
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_service%]"
+      "already_configured": "Service is already configured"
     },
     "error": {
-      "timeout": "Timeout connecting to Tibber",
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_access_token": "[%key:common::config_flow::error::invalid_access_token%]"
+      "cannot_connect": "Failed to connect",
+      "invalid_access_token": "Invalid access token",
+      "timeout": "Timeout connecting to Tibber"
     },
     "step": {
       "user": {
         "data": {
-          "access_token": "[%key:common::config_flow::data::access_token%]"
+          "access_token": "Access Token"
         },
         "description": "Enter your access token from https://developer.tibber.com/settings/accesstoken"
       }
     }
   },
   "options": {
-    "error": {},
+    "error": {
+    },
     "step": {
       "init": {
         "title": "Manage smart charging sensors",
