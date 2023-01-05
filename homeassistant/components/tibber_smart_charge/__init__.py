@@ -47,7 +47,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         websession=async_get_clientsession(hass),
         time_zone=dt_util.DEFAULT_TIME_ZONE,
     )
-    hass.data[DOMAIN] = tibber_connection
+    hass.data[DOMAIN] = {}
+    hass.data[DOMAIN]['tibber_connection'] = tibber_connection
+
 
     async def _close(event):
         await tibber_connection.rt_disconnect()
@@ -87,6 +89,6 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         config_entry, PLATFORMS
     )
     if unload_ok:
-        tibber_connection = hass.data[DOMAIN]
+        tibber_connection = hass.data[DOMAIN]['tibber_connection']
         await tibber_connection.rt_disconnect()
     return unload_ok

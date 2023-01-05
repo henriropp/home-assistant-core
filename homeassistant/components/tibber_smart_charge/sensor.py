@@ -34,7 +34,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Tibber sensor."""
 
-    tibber_connection = hass.data[TIBBER_DOMAIN]
+    tibber_connection = hass.data[TIBBER_DOMAIN]['tibber_connection']
 
     entities: list[TibberSensor] = []
     for home in tibber_connection.get_homes(only_active=False):
@@ -72,7 +72,7 @@ class TibberSensor(SensorEntity):
         self._model = None
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return the device_info of the device."""
         device_info = DeviceInfo(
             identifiers={(TIBBER_DOMAIN, self._tibber_home.home_id)},

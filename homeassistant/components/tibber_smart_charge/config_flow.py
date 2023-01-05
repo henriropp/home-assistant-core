@@ -23,7 +23,7 @@ from .const import DOMAIN
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_ACCESS_TOKEN): str,
+        vol.Required(CONF_ACCESS_TOKEN): str
     }
 )
 
@@ -71,7 +71,6 @@ class TibberSmartChargeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_SENSORS] = []
             return self.async_create_entry(
                 title=tibber_connection.name,
-                # data={CONF_ACCESS_TOKEN: access_token},
                 data=user_input,
             )
 
