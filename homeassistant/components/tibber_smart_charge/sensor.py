@@ -2,24 +2,24 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from random import randrange
-from typing import Any, Dict, Optional
+from typing import Any
 
 import aiohttp
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ACCESS_TOKEN, CONF_COUNT, CONF_NAME, CONF_SENSORS
+from homeassistant.const import CONF_COUNT, CONF_NAME, CONF_SENSORS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import Throttle, dt as dt_util
-
 from .const import DOMAIN as TIBBER_DOMAIN, MANUFACTURER
 from .price_logic import PriceLogic
+from ..binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+        hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up the Tibber sensor."""
 
@@ -50,7 +50,7 @@ async def async_setup_entry(
         if home.has_active_subscription:
             entities.append(TibberSensorElPrice(home))
             if CONF_SENSORS in entry.options:
-                smart_charge_sensors = [SmartChargeSensor(data) for data in entry.options[CONF_SENSORS]]
+                smart_charge_sensors = [SmartChargeSensor(home, data) for data in entry.options[CONF_SENSORS]]
                 for sensor in smart_charge_sensors:
                     entities.append(sensor)
 
@@ -110,19 +110,19 @@ class TibberSensorElPrice(TibberSensor):
         """Get the latest data and updates the states."""
         now = dt_util.now()
         if (
-            not self._tibber_home.last_data_timestamp
-            or (self._tibber_home.last_data_timestamp - now).total_seconds()
-            < 5 * 3600 + self._spread_load_constant
-            or not self.available
+                not self._tibber_home.last_data_timestamp
+                or (self._tibber_home.last_data_timestamp - now).total_seconds()
+                < 5 * 3600 + self._spread_load_constant
+                or not self.available
         ):
             _LOGGER.debug("Asking for new data")
             await self._fetch_data()
 
         elif (
-            self._tibber_home.current_price_total
-            and self._last_updated
-            and self._last_updated.hour == now.hour
-            and self._tibber_home.last_data_timestamp
+                self._tibber_home.current_price_total
+                and self._last_updated
+                and self._last_updated.hour == now.hour
+                and self._tibber_home.last_data_timestamp
         ):
             return
 
@@ -145,26 +145,23 @@ class TibberSensorElPrice(TibberSensor):
             "gridCompany"
         ]
 
-        self._price_logic = PriceLogic(self._tibber_home.price_total)
-        now = dt_util.now()
-        self._price_logic.calculate_cheapest_hours(now)
-        hours_3 = self._price_logic.get_cheapest_hours(3)
-        self._attr_extra_state_attributes["3hours_next"] = hours_3[0][0]
-        self._attr_extra_state_attributes["3hours_next_price"] = hours_3[0][1]
-        self._attr_extra_state_attributes["3hours_next_active"] = (
-            dt_util.parse_datetime(hours_3[0][0]).hour == now.hour
-        )
 
-
-class SmartChargeSensor(Entity):
+class SmartChargeSensor(BinarySensorEntity):
     """Representation of a smart charge entity"""
 
-    def __init__(self, data: dict[str, str]):
+    def __init__(self, tibber_home, data: dict[str, str]):
         super().__init__()
-        self.attrs: dict[str, Any] = {CONF_COUNT: data[CONF_COUNT]}
+        self._tibber_home = tibber_home
+        self.attrs: dict[str, Any] = {
+            CONF_COUNT: data[CONF_COUNT],
+            'next_hour': None,
+            'next_hour_price': None,
+        }
         self._name = data[CONF_NAME]
-        self._state = None
         self._available = True
+        self._attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+        self._attr_is_on = False
+        self._price_logic = None
 
     @property
     def name(self) -> str:
@@ -182,9 +179,19 @@ class SmartChargeSensor(Entity):
         return self._available
 
     @property
-    def state(self) -> str | None:
-        return self._state
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self.attrs
 
     @property
-    def device_state_attributes(self) -> dict[str, Any]:
-        return self.attrs
+    def hours(self) -> int:
+        return self.attrs[CONF_COUNT]
+
+    async def async_update(self) -> None:
+        price_logic = PriceLogic(self._tibber_home.price_total)
+        now = dt_util.now()
+        hours = price_logic.find_cheapest_hours(self.hours, now)
+        if hours:
+            self.attrs["next_hour"] = hours[0][0]
+            self.attrs["next_hour_price"] = hours[0][1]
+        if self.attrs["next_hour"]:
+            self._attr_is_on = dt_util.parse_datetime(self.attrs["next_hour"]).hour == now.hour
