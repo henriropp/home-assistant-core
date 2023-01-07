@@ -1,7 +1,8 @@
 """Adds config flow for Tibber integration."""
 import asyncio
+import logging
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any
 
 import aiohttp
 import tibber
@@ -9,16 +10,14 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_COUNT, CONF_NAME, CONF_SENSORS
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_registry import (
     async_entries_for_config_entry,
     async_get as async_get_entity_reg,
-    async_get_registry,
 )
-
 from .const import DOMAIN
 
 DATA_SCHEMA = vol.Schema(
@@ -26,6 +25,8 @@ DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_ACCESS_TOKEN): str
     }
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class TibberSmartChargeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -83,7 +84,7 @@ class TibberSmartChargeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
+            config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
         return OptionsFlowHandler(config_entry)
@@ -95,7 +96,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
+            self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         errors: dict[str, str] = {}
@@ -108,12 +109,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         sensors_map = {e.entity_id: e for e in entries}
 
         if user_input is not None:
-            updated_sensors = deepcopy(self.config_entry.data[CONF_SENSORS])
+            updated_sensors = deepcopy(self.config_entry.options[CONF_SENSORS])
 
             removed_sensors = [
-                entity_id
-                for entity_id in sensors_map.keys()
-                if entity_id not in user_input[CONF_SENSORS]
+                entity_id for entity_id in sensors_map.keys() if entity_id not in user_input[CONF_SENSORS]
             ]
             for entity_id in removed_sensors:
                 # Unregister from HA
