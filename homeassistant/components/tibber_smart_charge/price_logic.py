@@ -43,9 +43,4 @@ class PriceLogic:
         result = filtered_list[0:count]
         result.sort(key=lambda a: a[0])
 
-        print("Result:")
-        for ts, price in result:
-            print(ts)
-            print(price)
-
         return result

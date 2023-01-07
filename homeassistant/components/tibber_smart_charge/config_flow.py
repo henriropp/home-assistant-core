@@ -9,7 +9,7 @@ import tibber
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_ACCESS_TOKEN, CONF_COUNT, CONF_NAME, CONF_SENSORS
+from homeassistant.const import CONF_ACCESS_TOKEN, CONF_COUNT, CONF_NAME, CONF_SENSORS, TIME_HOURS
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
@@ -129,6 +129,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     {
                         "name": user_input[CONF_NAME],
                         "count": user_input.get(CONF_COUNT, user_input[CONF_NAME]),
+                        "h": user_input.get(TIME_HOURS, user_input[CONF_NAME]),
                     }
                 )
 
@@ -144,6 +145,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ): cv.multi_select(all_sensors),
                 vol.Optional(CONF_NAME): str,
                 vol.Optional(CONF_COUNT): int,
+                vol.Optional(TIME_HOURS): int,
             }
         )
 

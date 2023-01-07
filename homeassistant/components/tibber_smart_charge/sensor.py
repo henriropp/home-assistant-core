@@ -11,7 +11,7 @@ import aiohttp
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_COUNT, CONF_NAME, CONF_SENSORS
+from homeassistant.const import CONF_COUNT, CONF_NAME, CONF_SENSORS, TIME_HOURS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import DeviceInfo
@@ -23,7 +23,8 @@ from ..binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
 
 _LOGGER = logging.getLogger(__name__)
 
-ICON = "mdi:currency-usd"
+ICON_CURRENCY = "mdi:currency-usd"
+ICON_CHARGING = "mdi:battery-charging-outline"
 SCAN_INTERVAL = timedelta(minutes=1)
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 PARALLEL_UPDATES = 0
@@ -99,7 +100,7 @@ class TibberSensorElPrice(TibberSensor):
             "app_nickname": None,
             "grid_company": None,
         }
-        self._attr_icon = ICON
+        self._attr_icon = ICON_CURRENCY
         self._attr_name = f"Electricity price {self._home_name}"
         self._attr_unique_id = self._tibber_home.home_id
         self._model = "Price Sensor"
@@ -156,12 +157,33 @@ class SmartChargeSensor(BinarySensorEntity):
             CONF_COUNT: data[CONF_COUNT],
             'next_hour': None,
             'next_hour_price': None,
+            'done_before_hour': data[TIME_HOURS] if data[TIME_HOURS] else None,
         }
+
+        for idx in range(int(data[CONF_COUNT])):
+            if idx > 0:
+                self.attrs[f'other_hour_{idx}'] = None
+
         self._name = data[CONF_NAME]
         self._available = True
         self._attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
         self._attr_is_on = False
+        self._attr_icon = ICON_CHARGING
         self._price_logic = None
+        self._device_name = tibber_home.info["viewer"]["home"]["appNickname"]
+        self._model = "Smart Charge Sensor"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device_info of the device."""
+        device_info = DeviceInfo(
+            identifiers={(TIBBER_DOMAIN, self._tibber_home.home_id)},
+            name=self._device_name,
+            manufacturer=MANUFACTURER,
+        )
+        if self._model is not None:
+            device_info["model"] = self._model
+        return device_info
 
     @property
     def name(self) -> str:
@@ -188,10 +210,18 @@ class SmartChargeSensor(BinarySensorEntity):
 
     async def async_update(self) -> None:
         price_logic = PriceLogic(self._tibber_home.price_total)
-        now = dt_util.now()
-        hours = price_logic.find_cheapest_hours(self.hours, now)
-        if hours:
-            self.attrs["next_hour"] = hours[0][0]
-            self.attrs["next_hour_price"] = hours[0][1]
+        time_from = dt_util.now().replace(minute=0, second=0, microsecond=0)
+        cheap_hours = price_logic.find_cheapest_hours(self.hours, time_from, self.attrs["done_before_hour"])
+        idx = 0
+        for dt, price in cheap_hours:
+            if idx == 0:
+                self.attrs["next_hour"] = dt
+                self.attrs["next_hour_price"] = price
+            else:
+                self.attrs[f'other_hour_{idx}'] = f'{dt} = {price}'
+            idx += 1
+
         if self.attrs["next_hour"]:
-            self._attr_is_on = dt_util.parse_datetime(self.attrs["next_hour"]).hour == now.hour
+            self._attr_is_on = (self.attrs["next_hour"].hour == time_from.hour)
+        else:
+            self._attr_is_on = False

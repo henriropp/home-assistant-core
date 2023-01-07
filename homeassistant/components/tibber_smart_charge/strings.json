@@ -25,7 +25,8 @@
         "data": {
           "sensors": "Existing sensors: Uncheck any sensors you want to remove.",
           "name": "New Sensor: Name of the new smart charging sensor.",
-          "count": "New Sensor: Number of hours the sensor should plan for."
+          "count": "New Sensor: Number of hours the sensor should plan for.",
+          "h": "New Sensor: Done charging before this hour (0-23)"
         },
         "description": "Remove existing sensors or add a new sensor."
       }
