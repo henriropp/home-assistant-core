@@ -1,6 +1,8 @@
 """Price logic."""
 
 import logging
+from copy import deepcopy
+from datetime import timedelta
 
 from homeassistant.util import dt as dt_util
 
@@ -12,31 +14,38 @@ class PriceLogic:
 
     def __init__(self, price_dict):
         """Init."""
-        self._price_list = list(price_dict.items())
-        self._price_list.sort(key=lambda a: a[1])
-        self._hours = []
+        # self._price_list = list(price_dict.items())
+        self._price_list = [(dt_util.parse_datetime(ts), price) for ts, price in price_dict.items()]
+        self._price_list.sort(key=lambda a: a[0])
 
-    def find_cheapest_hours(self, count, time_from=None):
+    def find_cheapest_hours(self, count, time_from=None, before_hour=None):
         """Find cheapest number of hours starting from time_from."""
-        filtered_list = self._price_list
+        filtered_list = deepcopy(self._price_list)
         if time_from:
             filtered_list = list(
                 filter(
-                    lambda ti: dt_util.parse_datetime(ti[0]) >= time_from, filtered_list
+                    lambda ti: ti[0] >= time_from, filtered_list
                 )
             )
+        if before_hour:
+            max_time = time_from.replace(hour=before_hour)
+            if time_from.hour >= before_hour:
+                max_time = time_from + timedelta(days=1)
+
+            filtered_list = list(
+                filter(
+                    lambda ti: ti[0] < max_time, filtered_list
+                )
+            )
+
+        filtered_list.sort(key=lambda a: a[1])
+
         result = filtered_list[0:count]
         result.sort(key=lambda a: a[0])
+
+        print("Result:")
+        for ts, price in result:
+            print(ts)
+            print(price)
+
         return result
-
-    def calculate_cheapest_hours(self, time_from):
-        """Calculate checpest hours 1-10."""
-        self._hours.clear()
-        for i in range(1, 11):
-            hours = self.find_cheapest_hours(i, time_from)
-            self._hours.append(hours)
-            _LOGGER.info("Hours %d: %s", i, hours)
-
-    def get_cheapest_hours(self, count):
-        """Get calculated hours."""
-        return self._hours[count - 1]
