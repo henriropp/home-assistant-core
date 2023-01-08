@@ -14,6 +14,7 @@ from homeassistant.helpers.typing import UndefinedType
 
 from . import purge, statistics
 from .const import DOMAIN, EXCLUDE_ATTRIBUTES
+from .db_schema import Statistics, StatisticsShortTerm
 from .models import StatisticData, StatisticMetaData
 from .util import periodic_db_cleanups
 
@@ -132,13 +133,14 @@ class StatisticsTask(RecorderTask):
     """An object to insert into the recorder queue to run a statistics task."""
 
     start: datetime
+    fire_events: bool
 
     def run(self, instance: Recorder) -> None:
         """Run statistics task."""
-        if statistics.compile_statistics(instance, self.start):
+        if statistics.compile_statistics(instance, self.start, self.fire_events):
             return
         # Schedule a new statistics task if this one didn't finish
-        instance.queue_task(StatisticsTask(self.start))
+        instance.queue_task(StatisticsTask(self.start, self.fire_events))
 
 
 @dataclass
@@ -147,13 +149,18 @@ class ImportStatisticsTask(RecorderTask):
 
     metadata: StatisticMetaData
     statistics: Iterable[StatisticData]
+    table: type[Statistics | StatisticsShortTerm]
 
     def run(self, instance: Recorder) -> None:
         """Run statistics task."""
-        if statistics.import_statistics(instance, self.metadata, self.statistics):
+        if statistics.import_statistics(
+            instance, self.metadata, self.statistics, self.table
+        ):
             return
         # Schedule a new statistics task if this one didn't finish
-        instance.queue_task(ImportStatisticsTask(self.metadata, self.statistics))
+        instance.queue_task(
+            ImportStatisticsTask(self.metadata, self.statistics, self.table)
+        )
 
 
 @dataclass
@@ -290,3 +297,17 @@ class SynchronizeTask(RecorderTask):
         # Does not use a tracked task to avoid
         # blocking shutdown if the recorder is broken
         instance.hass.loop.call_soon_threadsafe(self.event.set)
+
+
+@dataclass
+class PostSchemaMigrationTask(RecorderTask):
+    """Post migration task to update schema."""
+
+    old_version: int
+    new_version: int
+
+    def run(self, instance: Recorder) -> None:
+        """Handle the task."""
+        instance._post_schema_migration(  # pylint: disable=[protected-access]
+            self.old_version, self.new_version
+        )
