@@ -1,7 +1,10 @@
 """Support for Fibaro switches."""
+
 from __future__ import annotations
 
 from typing import Any
+
+from pyfibaro.fibaro_device import DeviceModel
 
 from homeassistant.components.switch import ENTITY_ID_FORMAT, SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -9,8 +12,9 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import FIBARO_DEVICES, FibaroDevice
+from . import FibaroController
 from .const import DOMAIN
+from .entity import FibaroEntity
 
 
 async def async_setup_entry(
@@ -19,21 +23,17 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Fibaro switches."""
+    controller: FibaroController = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        [
-            FibaroSwitch(device)
-            for device in hass.data[DOMAIN][entry.entry_id][FIBARO_DEVICES][
-                Platform.SWITCH
-            ]
-        ],
+        [FibaroSwitch(device) for device in controller.fibaro_devices[Platform.SWITCH]],
         True,
     )
 
 
-class FibaroSwitch(FibaroDevice, SwitchEntity):
+class FibaroSwitch(FibaroEntity, SwitchEntity):
     """Representation of a Fibaro Switch."""
 
-    def __init__(self, fibaro_device: Any) -> None:
+    def __init__(self, fibaro_device: DeviceModel) -> None:
         """Initialize the Fibaro device."""
         super().__init__(fibaro_device)
         self.entity_id = ENTITY_ID_FORMAT.format(self.ha_id)
@@ -50,4 +50,5 @@ class FibaroSwitch(FibaroDevice, SwitchEntity):
 
     def update(self) -> None:
         """Update device state."""
+        super().update()
         self._attr_is_on = self.current_binary_state

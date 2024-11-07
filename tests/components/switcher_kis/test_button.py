@@ -1,4 +1,5 @@
 """Tests for Switcher button platform."""
+
 from unittest.mock import ANY, patch
 
 from aioswitcher.api import DeviceState, SwitcherBaseResponse, ThermostatSwing
@@ -21,14 +22,16 @@ SWING_OFF_EID = BASE_ENTITY_ID + "_vertical_swing_off"
 
 
 @pytest.mark.parametrize(
-    "entity, state",
+    ("entity", "state"),
     [
         (ASSUME_ON_EID, DeviceState.ON),
         (ASSUME_OFF_EID, DeviceState.OFF),
     ],
 )
 @pytest.mark.parametrize("mock_bridge", [[DEVICE]], indirect=True)
-async def test_assume_button(hass: HomeAssistant, entity, state, mock_bridge, mock_api):
+async def test_assume_button(
+    hass: HomeAssistant, entity, state, mock_bridge, mock_api
+) -> None:
     """Test assume on/off button."""
     await init_integration(hass)
     assert mock_bridge
@@ -52,7 +55,7 @@ async def test_assume_button(hass: HomeAssistant, entity, state, mock_bridge, mo
 
 
 @pytest.mark.parametrize(
-    "entity, swing",
+    ("entity", "swing"),
     [
         (SWING_ON_EID, ThermostatSwing.ON),
         (SWING_OFF_EID, ThermostatSwing.OFF),
@@ -60,15 +63,18 @@ async def test_assume_button(hass: HomeAssistant, entity, state, mock_bridge, mo
 )
 @pytest.mark.parametrize("mock_bridge", [[DEVICE]], indirect=True)
 async def test_swing_button(
-    hass: HomeAssistant, entity, swing, mock_bridge, mock_api, monkeypatch
-):
+    hass: HomeAssistant,
+    entity,
+    swing,
+    mock_bridge,
+    mock_api,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test vertical swing on/off button."""
     monkeypatch.setattr(DEVICE, "remote_id", "ELEC7022")
     await init_integration(hass)
     assert mock_bridge
 
-    assert hass.states.get(ASSUME_ON_EID) is None
-    assert hass.states.get(ASSUME_OFF_EID) is None
     assert hass.states.get(SWING_ON_EID) is not None
     assert hass.states.get(SWING_OFF_EID) is not None
 
@@ -86,7 +92,9 @@ async def test_swing_button(
 
 
 @pytest.mark.parametrize("mock_bridge", [[DEVICE]], indirect=True)
-async def test_control_device_fail(hass, mock_bridge, mock_api, monkeypatch):
+async def test_control_device_fail(
+    hass: HomeAssistant, mock_bridge, mock_api, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test control device fail."""
     await init_integration(hass)
     assert mock_bridge

@@ -1,4 +1,5 @@
 """Support for Ubiquiti mFi sensors."""
+
 from __future__ import annotations
 
 import logging
@@ -8,7 +9,7 @@ import requests
 import voluptuous as vol
 
 from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA,
+    PLATFORM_SCHEMA as SENSOR_PLATFORM_SCHEMA,
     SensorDeviceClass,
     SensorEntity,
 )
@@ -44,7 +45,7 @@ SENSOR_MODELS = [
     "Input Digital",
 ]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_USERNAME): cv.string,
@@ -133,14 +134,14 @@ class MfiSensor(SensorEntity):
         try:
             tag = self._port.tag
         except ValueError:
-            return "State"
+            return None
 
         if tag == "temperature":
             return UnitOfTemperature.CELSIUS
         if tag == "active_pwr":
             return "Watts"
         if self._port.model == "Input Digital":
-            return "State"
+            return None
         return tag
 
     def update(self) -> None:

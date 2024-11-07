@@ -1,4 +1,5 @@
 """Support for media browsing."""
+
 import logging
 
 from afsapi import AFSAPI, FSApiException, OutOfRangeException, Preset
@@ -27,8 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _item_preset_payload(preset: Preset, player_mode: str) -> BrowseMedia:
-    """
-    Create response payload for a single media item.
+    """Create response payload for a single media item.
 
     Used by async_browse_media.
     """
@@ -47,8 +47,7 @@ def _item_preset_payload(preset: Preset, player_mode: str) -> BrowseMedia:
 def _item_payload(
     key, item: dict[str, str], player_mode: str, parent_keys: list[str]
 ) -> BrowseMedia:
-    """
-    Create response payload for a single media item.
+    """Create response payload for a single media item.
 
     Used by async_browse_media.
     """
@@ -76,8 +75,7 @@ def _item_payload(
 
 
 async def browse_top_level(current_mode, afsapi: AFSAPI):
-    """
-    Create response payload to describe contents of a specific library.
+    """Create response payload to describe contents of a specific library.
 
     Used by async_browse_media.
     """
@@ -96,7 +94,7 @@ async def browse_top_level(current_mode, afsapi: AFSAPI):
         for top_level_media_content_id, name in TOP_LEVEL_DIRECTORIES.items()
     ]
 
-    library_info = BrowseMedia(
+    return BrowseMedia(
         media_class=MediaClass.DIRECTORY,
         media_content_id="library",
         media_content_type=MediaType.CHANNELS,
@@ -106,8 +104,6 @@ async def browse_top_level(current_mode, afsapi: AFSAPI):
         children=children,
         children_media_class=MediaClass.DIRECTORY,
     )
-
-    return library_info
 
 
 async def browse_node(

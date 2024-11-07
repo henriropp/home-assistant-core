@@ -1,7 +1,6 @@
 """Support for RuuviTag sensors."""
-from __future__ import annotations
 
-from typing import Optional, Union
+from __future__ import annotations
 
 from sensor_state_data import (
     DeviceKey,
@@ -77,7 +76,7 @@ SENSOR_DESCRIPTIONS = {
     ),
     (SSDSensorDeviceClass.COUNT, None): SensorEntityDescription(
         key="movement_counter",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
     ),
 }
@@ -144,7 +143,7 @@ async def async_setup_entry(
 
 class RuuvitagBluetoothSensorEntity(
     PassiveBluetoothProcessorEntity[
-        PassiveBluetoothDataProcessor[Optional[Union[float, int]]]
+        PassiveBluetoothDataProcessor[float | int | None, SensorUpdate]
     ],
     SensorEntity,
 ):

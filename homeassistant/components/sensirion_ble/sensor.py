@@ -1,7 +1,6 @@
 """Support for Sensirion sensors."""
-from __future__ import annotations
 
-from typing import Optional, Union
+from __future__ import annotations
 
 from sensor_state_data import (
     DeviceKey,
@@ -124,7 +123,7 @@ async def async_setup_entry(
 
 class SensirionBluetoothSensorEntity(
     PassiveBluetoothProcessorEntity[
-        PassiveBluetoothDataProcessor[Optional[Union[float, int]]]
+        PassiveBluetoothDataProcessor[float | int | None, SensorUpdate]
     ],
     SensorEntity,
 ):

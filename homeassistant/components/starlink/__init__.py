@@ -1,4 +1,5 @@
 """The Starlink integration."""
+
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
@@ -8,7 +9,14 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 from .coordinator import StarlinkUpdateCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.DEVICE_TRACKER,
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.TIME,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

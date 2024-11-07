@@ -1,4 +1,9 @@
 """Constants for Stream component."""
+
+from __future__ import annotations
+
+from typing import Final
+
 DOMAIN = "stream"
 
 ATTR_ENDPOINTS = "endpoints"
@@ -10,8 +15,8 @@ RECORDER_PROVIDER = "recorder"
 
 OUTPUT_FORMATS = [HLS_PROVIDER]
 
-SEGMENT_CONTAINER_FORMAT = "mp4"  # format for segments
-RECORDER_CONTAINER_FORMAT = "mp4"  # format for recorder output
+SEGMENT_CONTAINER_FORMAT: Final = "mp4"  # format for segments
+RECORDER_CONTAINER_FORMAT: Final = "mp4"  # format for recorder output
 AUDIO_CODECS = {"aac", "mp3"}
 
 FORMAT_CONTENT_TYPE = {HLS_PROVIDER: "application/vnd.apple.mpegurl"}
@@ -31,7 +36,7 @@ EXT_X_START_LL_HLS = 2
 
 
 PACKETS_TO_WAIT_FOR_AUDIO = 20  # Some streams have an audio stream with no audio
-MAX_TIMESTAMP_GAP = 10000  # seconds - anything from 10 to 50000 is probably reasonable
+MAX_TIMESTAMP_GAP = 30  # seconds - anything from 10 to 50000 is probably reasonable
 
 MAX_MISSING_DTS = 6  # Number of packets missing DTS to allow
 SOURCE_TIMEOUT = 30  # Timeout for reading stream source

@@ -1,7 +1,6 @@
 """Support for Tilt Hydrometers."""
-from __future__ import annotations
 
-from typing import Optional, Union
+from __future__ import annotations
 
 from tilt_ble import DeviceClass, DeviceKey, SensorUpdate, Units
 
@@ -104,7 +103,7 @@ async def async_setup_entry(
 
 class TiltBluetoothSensorEntity(
     PassiveBluetoothProcessorEntity[
-        PassiveBluetoothDataProcessor[Optional[Union[float, int]]]
+        PassiveBluetoothDataProcessor[float | int | None, SensorUpdate]
     ],
     SensorEntity,
 ):
